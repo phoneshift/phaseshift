@@ -1,0 +1,16 @@
+# Used in .github/workflows/build_wheels.yml to run C++ and Python private tests
+
+name: phaseshift-ci
+channels:
+  - https://software.repos.intel.com/python/conda
+  - conda-forge
+  - defaults
+dependencies:
+  - libsndfile==1.2.2
+  - libboost==1.89.0
+  - libboost-devel==1.89.0
+  - libboost-headers==1.89.0
+  - python==3.11
+  - pip==25.0.1
+  - pkg-config==0.29.2
+  - pkgconfig==1.5.5

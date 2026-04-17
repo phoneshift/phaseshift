@@ -1,0 +1,172 @@
+name: FFTScarf - Build, Test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }} with ${{ matrix.c_compiler }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
+      fail-fast: false
+
+      # Set up a matrix to run the following 3 configurations:
+      # 1. <Windows, Release, latest MSVC compiler toolchain on the default runner image, default generator>
+      # 2. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
+      # 3. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
+      #
+      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
+      matrix:
+        os: [ubuntu-24.04, macos-14, windows-latest]
+        build_type: [Release]
+        c_compiler: [gcc, clang, cl]
+        include:
+          - os: ubuntu-24.04
+            c_compiler: gcc
+            cpp_compiler: g++
+          - os: ubuntu-24.04
+            c_compiler: clang
+            cpp_compiler: clang++
+          - os: macos-14
+            c_compiler: clang
+            cpp_compiler: clang++
+          - os: windows-latest
+            c_compiler: cl
+            cpp_compiler: cl
+        exclude:
+          - os: ubuntu-24.04
+            c_compiler: cl
+          - os: macos-14
+            c_compiler: cl
+          - os: macos-14
+            c_compiler: gcc
+          - os: windows-latest
+            c_compiler: gcc
+          - os: windows-latest
+            c_compiler: clang
+ 
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Conda - Setup
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        auto-update-conda: true
+        activate-environment: phaseshift-ci
+        environment-file: environment-ci-${{ matrix.os }}.yml
+        python-version: '3.11'
+    - name: Conda - info
+      shell: bash -el {0}
+      run: conda info
+    - name: Conda - list
+      shell: bash -el {0}
+      run: conda list
+
+    - name: Conda - Cache
+      uses: actions/cache@v4
+      with:
+        path: ~/conda_pkgs_dir
+        key:
+          test-fftscarf-conda-${{ matrix.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}-${{
+          hashFiles('environment-ci-${{ matrix.os }}.yml') }}  # OK
+
+    # Doesnt't help find libraries on Windows workers
+    # - name: Add paths for Windows builds
+    #   run: |
+    #     echo "C:/Program Files/libsndfile/bin/" >> $GITHUB_PATH
+
+    - name: Set reusable strings
+      id: strings
+      shell: bash -el {0}
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+
+    # TODO Add IPP, FFTW3, AVUtil
+    - name: Configure with CMake
+      if: ${{ (matrix.os == 'ubuntu-24.04') && (matrix.c_compiler == 'gcc') }}
+      shell: bash -el {0}
+      run: >
+        cmake -B "${{ steps.strings.outputs.build-output-dir }}"
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}        
+        -DFFTSCARF_FFT_FFTREAL=ON
+        -DFFTSCARF_FFT_OOURA=ON
+        -DFFTSCARF_FFT_PFFFT=ON
+        -DFFTSCARF_FFT_FFTS=ON
+        -DFFTSCARF_FFT_KISSFFT=ON
+        -DFFTSCARF_BUILD_TEST=ON
+        -S ${{ github.workspace }}/ext/fftscarf
+
+    # TODO Add IPP, FFTW3, AVUtil
+    - name: Configure with CMake
+      if: ${{ (matrix.os == 'ubuntu-24.04') && (matrix.c_compiler == 'clang') }}
+      shell: bash -el {0}
+      run: >
+        cmake -B "${{ steps.strings.outputs.build-output-dir }}"
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}        
+        -DFFTSCARF_FFT_FFTREAL=ON
+        -DFFTSCARF_FFT_OOURA=ON
+        -DFFTSCARF_FFT_PFFFT=ON
+        -DFFTSCARF_FFT_FFTS=OFF
+        -DFFTSCARF_FFT_KISSFFT=ON
+        -DFFTSCARF_BUILD_TEST=ON
+        -S ${{ github.workspace }}/ext/fftscarf
+
+    - name: Configure with CMake
+      if: matrix.os == 'macos-14'
+      shell: bash -el {0}
+      run: >
+        cmake -B "${{ steps.strings.outputs.build-output-dir }}"
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}        
+        -DFFTSCARF_FFT_FFTREAL=ON
+        -DFFTSCARF_FFT_OOURA=ON
+        -DFFTSCARF_FFT_VDSP=ON
+        -DFFTSCARF_BUILD_TEST=ON
+        -S ${{ github.workspace }}/ext/fftscarf
+
+    # TODO Add IPP, FFTW3, KissFFT, PFFFT, FFTS
+    - name: Configure with CMake
+      if: matrix.os == 'windows-latest'
+      shell: bash -el {0}
+      run: >
+        cmake -B "${{ steps.strings.outputs.build-output-dir }}"
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}        
+        -DFFTSCARF_FFT_FFTREAL=ON
+        -DFFTSCARF_FFT_OOURA=ON
+        -DFFTSCARF_BUILD_TEST=ON
+        -S "${{ github.workspace }}\ext\fftscarf"
+      env:
+        PKG_CONFIG_PATH: $CONDA_PREFIX/lib/pkgconfig/
+
+    - name: Build
+      shell: bash -el {0}
+      run: cmake --build "${{ steps.strings.outputs.build-output-dir }}" --config "${{ matrix.build_type }}"
+
+    - name: List FFT libraries
+      shell: bash -el {0}
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}/test
+      run: |
+        ./test_version
+        ./test_misc
+        ./test_fftlibs
+        ./test_fftplanmanager
+
+    - name: Test
+      working-directory: ${{ steps.strings.outputs.build-output-dir }}/test
+      shell: bash -el {0}
+      run: ctest --output-on-failure --build-config ${{ matrix.build_type }}  # -VV 
