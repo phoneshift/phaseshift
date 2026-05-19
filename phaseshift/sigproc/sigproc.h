@@ -258,10 +258,9 @@ namespace phaseshift {
             int size = parray->size();
             float a, b, c, d, phiidxf, x, y, z;
             int cossinidx;
-            phiidxf = 0.5f;  // +0.5 for rounding to nearest neighbor
             if (phase_shift_coef > 0) {
                 for (int k = 0; k < size; ++k) {
-
+                    phiidxf = k * phase_shift_coef_idxf + 0.5f;  // +0.5 for rounding to nearest neighbor
                     while (phiidxf > twopi_idxf)
                         phiidxf -= twopi_idxf;
                     cossinidx = static_cast<int>(phiidxf);
@@ -275,13 +274,11 @@ namespace phaseshift {
                     z = a - b;
                     *pdst++ = z * d + x;
                     *pdst++ = y * c - x;
-
-                    phiidxf += phase_shift_coef_idxf;
                 }
             } else {
                 phase_shift_coef_idxf = -phase_shift_coef_idxf;
                 for (int k = 0; k < size; ++k) {
-
+                    phiidxf = k * phase_shift_coef_idxf + 0.5f;  // +0.5 for rounding to nearest neighbor
                     while (phiidxf > twopi_idxf)
                         phiidxf -= twopi_idxf;
                     cossinidx = static_cast<int>(phiidxf);
@@ -296,8 +293,6 @@ namespace phaseshift {
                     z = a - b;
                     *pdst++ = x - z * d;
                     *pdst++ = y * c - x;
-
-                    phiidxf += phase_shift_coef_idxf;
                 }
             }
         #elif 0
