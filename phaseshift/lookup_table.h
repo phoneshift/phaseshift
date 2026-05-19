@@ -299,8 +299,10 @@ namespace phaseshift {
      protected:
         friend phaseshift::lookup_table;
 
-        template<typename value_type>
-        inline value_type evaluate_ground_truth(value_type x) const {
+        inline float evaluate_ground_truth(float x) const {
+            return cosf(x);
+        }
+        inline double evaluate_ground_truth(double x) const {
             return std::cos(x);
         }
 
@@ -336,8 +338,10 @@ namespace phaseshift {
      protected:
         friend phaseshift::lookup_table;
 
-        template<typename value_type>
-        inline value_type evaluate_ground_truth(value_type x) const {
+        inline float evaluate_ground_truth(float x) const {
+            return sinf(x);
+        }
+        inline double evaluate_ground_truth(double x) const {
             return std::sin(x);
         }
 
