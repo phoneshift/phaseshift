@@ -253,9 +253,14 @@ namespace phaseshift {
      protected:
         friend phaseshift::lookup_table;
 
-        template<typename value_type>
-        inline value_type evaluate_ground_truth(value_type x) const {
-            return phaseshift::lin2db(x);
+        //! Uses double precision intermediates for deterministic LUT initialization.
+        inline float evaluate_ground_truth(float x) const {
+            if (x <= 0.0f) return -300.0f;
+            return static_cast<float>(20.0 * log10(static_cast<double>(x)));
+        }
+        inline double evaluate_ground_truth(double x) const {
+            if (x <= 0.0) return -300.0;
+            return 20.0 * log10(x);
         }
 
      public:
@@ -276,9 +281,16 @@ namespace phaseshift {
      protected:
         friend phaseshift::lookup_table;
 
-        template<typename value_type>
-        inline value_type evaluate_ground_truth(value_type x) const {
-            return phaseshift::db2lin(x);
+        //! Uses double precision intermediates for deterministic LUT initialization.
+        inline float evaluate_ground_truth(float x) const {
+            if (x >= 0.0f) return 1.0f;
+            if (x <= -300.0f) return 0.0f;
+            return static_cast<float>(pow(10.0, x * 0.05));
+        }
+        inline double evaluate_ground_truth(double x) const {
+            if (x >= 0.0) return 1.0;
+            if (x <= -300.0) return 0.0;
+            return pow(10.0, x * 0.05);
         }
 
      public:
@@ -291,6 +303,7 @@ namespace phaseshift {
     };
     static lookup_table_db2lin01 g_lt_db2lin01_float;
     inline float db2lin01_ltf(float x) {
+        assert(x <= 0.0f);
         return g_lt_db2lin01_float.evaluate_lookup_table(x); // TODO(GD) There is a dereferencing of the object... CPU costly for no reason
     }
 
