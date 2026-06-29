@@ -184,7 +184,7 @@ namespace phaseshift {
                 lt.m_values[n] = lt.evaluate_ground_truth(x);
                 x_last = x;
             }
-            lt.m_xmax = x_last;
+            lt.m_xmax = x_last;  // Correct xmax because it might not have been reached precisely by xmin+N*step
 
             lt.m_x2i = (lt.m_size-1) / (lt.m_xmax-lt.m_xmin);
         }
