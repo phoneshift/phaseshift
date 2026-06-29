@@ -177,14 +177,14 @@ namespace phaseshift {
 
             lt.m_values = new float[lt.m_size];
 
-            int n = 0;
-            float x = lt.m_xmin;
-            float x_last = x;
-            for (; n < lt.m_size; x+=lt.m_step, ++n) {
+            // Compute x from index to avoid float accumulation drift (x += step overshoots xmax).
+            float x_last = lt.m_xmin;
+            for (int n = 0; n < lt.m_size; ++n) {
+                float x = lt.m_xmin + n * lt.m_step;
                 lt.m_values[n] = lt.evaluate_ground_truth(x);
                 x_last = x;
             }
-            lt.m_xmax = x_last;  // Correct xmax because it might not have been reached precisely by xmin+N*step
+            lt.m_xmax = x_last;
 
             lt.m_x2i = (lt.m_size-1) / (lt.m_xmax-lt.m_xmin);
         }

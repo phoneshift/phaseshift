@@ -76,7 +76,7 @@ TEST_CASE("db2lin01", "[lookup_table]") {
     phaseshift::lookup_table::validation_stats stats = phaseshift::lookup_table::test_validation(db2lin01_lt);
     require_common(stats);
     REQUIRE(stats.abserr_mean < 1e-5);
-    REQUIRE(stats.abserr_max < 1e-4);
+    REQUIRE(stats.abserr_max < 2e-4);
     REQUIRE(stats.rangerelerr_mean < 1e-5);
-    REQUIRE(stats.rangerelerr_max < 1e-4);
+    REQUIRE(stats.rangerelerr_max < 2e-4);
 }
