@@ -21,6 +21,7 @@
 #include <sstream>
 #include <cassert>
 #include <chrono>
+#include <string>
 #include <thread>
 #include <ctime>
 #include <iomanip>
@@ -147,11 +148,16 @@ namespace phaseshift {
         int check_compilation_options();
 
         //! This kind of assert is intended to be used in test functions only, so that technical tests can be run in release mode (handy when using cross compiling, or shipping SDKs).
-        inline void test_require(bool condition, const char* message) {
+        //! The std::string overload accepts the LE_ macros of cobalstamp/infra/security_strings.h, which expand to a decrypted std::string when COBALSTAMP_SECURITY_ENCODE is defined.
+        inline void test_require(bool condition, const std::string& message) {
             if (!condition) {
                 std::cerr << "ERROR: " << message << std::endl;
                 exit(1);
             }
+        }
+
+        inline void test_require(bool condition, const char* message) {
+            test_require(condition, std::string(message));
         }
 
         template<class datastruct_ref, class datastruct_test>
