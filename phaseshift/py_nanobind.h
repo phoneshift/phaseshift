@@ -51,7 +51,7 @@ inline void ndarray2ringbuffer(const nb::ndarray<>& _in, phaseshift::ringbuffer<
         // For higher dimensions, check all strides
         for (size_t i = 0; i < (size_t)_in.ndim(); ++i) {
             int64_t expected_stride = 1;
-            for (int j = _in.ndim() - 1; j > (int)i; --j) {
+            for (int j = (int)_in.ndim() - 1; j > (int)i; --j) {
                 expected_stride *= _in.shape(j);
             }
             if (_in.stride(i) != expected_stride) {
@@ -82,7 +82,7 @@ inline void ndarray2ringbuffer(const nb::ndarray<>& _in, phaseshift::ringbuffer<
             const double* data = static_cast<const double*>(_in.data());
             int64_t stride_elements = _in.stride(0);
             for (int k = 0; k < in_size; ++k) {
-                in->push_back(data[k * stride_elements]);
+                in->push_back(static_cast<float>(data[k * stride_elements]));
             }
         }
     } else {
